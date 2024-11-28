@@ -7,64 +7,60 @@ import {
   FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import  MaterialIcons  from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ThemeContext } from "@/context/ThemeContext";
 import { useState, useContext, useEffect } from "react";
 import { data } from "../data/todos";
 import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import Octicons from "@expo/vector-icons/Octicons";
-import AsyncStorage from '@react-native-async-storage/async-storage'
-// import { StatusBar } from "react-native"; 
-import { StatusBar } from "expo-status-bar"; 
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { StatusBar } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
 
 export default function Index() {
   const [todos, setTodos] = useState([]);
   const [text, setText] = useState("");
   const { colorScheme, setColorScheme, theme } = useContext(ThemeContext);
+  const router = useRouter();
 
   const [loded, error] = useFonts({
     Inter_500Medium,
   });
 
-  useEffect(()=>{
-    const fetchData=async()=>{
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const jsonValue=await AsyncStorage.getItem("TodoApp")
-        const storageTodos =jsonValue != null ? JSON.parse
-        (jsonValue):null
-        if(storageTodos && storageTodos.length){
-          setTodos(storageTodos.sort((a,b)=>b.id -a.id))
-        }else{
-          setTodos(data.sort((a,b)=>b.id-a.id))
+        const jsonValue = await AsyncStorage.getItem("TodoApp");
+        const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
+        if (storageTodos && storageTodos.length) {
+          setTodos(storageTodos.sort((a, b) => b.id - a.id));
+        } else {
+          setTodos(data.sort((a, b) => b.id - a.id));
         }
       } catch (error) {
         console.log(error);
-        
       }
-    }
-    fetchData()
-  },[data]);
+    };
+    fetchData();
+  }, [data]);
 
-  useEffect(()=>{
-
-    const storeData=async ()=>{
+  useEffect(() => {
+    const storeData = async () => {
       try {
-        const jsonValue = JSON.stringify(todos)
-        await AsyncStorage.setItem("TodoApp",jsonValue)
+        const jsonValue = JSON.stringify(todos);
+        await AsyncStorage.setItem("TodoApp", jsonValue);
       } catch (error) {
         console.log(error);
-        
       }
-    }
+    };
 
-    storeData()
-  },[todos])
-
+    storeData();
+  }, [todos]);
 
   if (!loded && !error) {
-    return <Text>Loading...</Text>;  // Loading 
+    return <Text>Loading...</Text>; // Loading
   }
   // console.log(theme)
   const styles = createStyles(theme, colorScheme);
@@ -89,27 +85,32 @@ export default function Index() {
     setTodos(todos.filter((todo) => todo.id !== id));
   };
 
+  const handlePress = (id) => {
+    router.push(`/todos/${id}`);
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.todoItem}>
-      <Text
-        style={[styles.todoText, item.completed && styles.completedText]}
-        onPress={() => toggleTodo(item.id)}
+      <Pressable
+        onPress={() => handlePress(item.id)}
+        onLongPress={() => toggleTodo(item.id)}
       >
-        {item.title}
-      </Text>
+        <Text style={[styles.todoText, item.completed && styles.completedText]}>
+          {item.title}
+        </Text>
+      </Pressable>
       <Pressable onPress={() => removeTodo(item.id)}>
         <MaterialIcons name="delete" size={36} color={theme.text} />
-        {/* <MaterialIcons name="delete" size={36} color={theme.text} selectable={undefined} /> */}
-          {/* <Text>Delete</Text> */}
       </Pressable>
     </View>
   );
-  console.log(theme,"theme")
+  console.log(theme, "theme");
   return (
-    <SafeAreaView style={styles.container} >
+    <SafeAreaView style={styles.container}>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
+          maxLength={30}
           placeholder="Add a new task"
           placeholderTextColor="gray"
           value={text}
@@ -119,14 +120,26 @@ export default function Index() {
           <Text style={styles.addButtonText}>Add</Text>
         </Pressable>
         <Pressable
-          onPress={() => setColorScheme(colorScheme === 'light' ? 'dark' : 'light')
+          onPress={() =>
+            setColorScheme(colorScheme === "light" ? "dark" : "light")
           }
-          style={{ marginLeft: 10 }}>
-          {colorScheme === 'dark' ? 
-            <Octicons name="moon" size={36} color={theme.text} selectable={undefined} />
-           : 
-            <Octicons name="sun" size={36} color={theme.text} selectable={undefined} />
-          }
+          style={{ marginLeft: 10 }}
+        >
+          {colorScheme === "dark" ? (
+            <Octicons
+              name="moon"
+              size={36}
+              color={theme.text}
+              selectable={undefined}
+            />
+          ) : (
+            <Octicons
+              name="sun"
+              size={36}
+              color={theme.text}
+              selectable={undefined}
+            />
+          )}
         </Pressable>
       </View>
       <Animated.FlatList
@@ -135,9 +148,9 @@ export default function Index() {
         keyExtractor={(todo) => todo.id.toString()}
         contentContainerStyle={{ flexGrow: 1 }}
         itemLayoutAnimation={LinearTransition}
-        keyboardDismissMode='on-drag'
+        keyboardDismissMode="on-drag"
       />
-      <StatusBar style={colorScheme === 'dark' ? 'light': 'dark'}/>
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </SafeAreaView>
   );
 }
@@ -176,14 +189,14 @@ function createStyles(theme, colorScheme) {
     },
     addButtonText: {
       fontSize: 18,
-      color: colorScheme === 'dark' ? 'black' : 'white',
+      color: colorScheme === "dark" ? "black" : "white",
     },
     todoItem: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       padding: 10,
-      borderBottomColor: theme.border,  // Use theme border color
+      borderBottomColor: theme.border, // Use theme border color
       borderBottomWidth: 1,
     },
     todoText: {
